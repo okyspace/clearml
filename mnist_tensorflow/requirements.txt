@@ -54,6 +54,7 @@ s3transfer==0.3.3
 six==1.15.0
 tensorboard
 tensorboard-plugin-wit
+tensorflow
 tensorflow-datasets
 tensorflow-estimator
 tensorflow-metadata

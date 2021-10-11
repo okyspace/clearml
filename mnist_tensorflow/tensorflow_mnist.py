@@ -10,15 +10,15 @@ if __name__ == '__main__':
     os.environ["AWS_ACCESS_KEY_ID"] = "admin"
     os.environ["AWS_SECRET_ACCESS_KEY"] = "password"
 
-    model_snapshots_path = 's3://https://192.168.1.110:9000/clearml-models'
-    if not os.path.exists(model_snapshots_path):
-        os.makedirs(model_snapshots_path)
+    # model_snapshots_path = 's3://https://192.168.1.110:9000/clearml-models'
+    # if not os.path.exists(model_snapshots_path):
+    #    os.makedirs(model_snapshots_path)
 
     task = Task.init(project_name='MNIST',
-       task_name='Tensorflow Remote', output_uri='./')
+       task_name='Tensorflow Training', output_uri='./')
     #task.set_base_docker("harbor.io/nvidia/pytorch:20.07-py3 --env TRAINS_AGENT_GIT_USER=tkahsion --env GIT_SSL_NO_VERIFY=true")
 
-    task.set_base_docker("mnist:latest --env GIT_SSL_NO_VERIFY=true --env TRAINS_AGENT_GIT_USER=okyspace --env TRAINS_AGENT_GIT_PASS=airlab123")
+    task.set_base_docker("quay.io/a0020279l/mnist:latest --env GIT_SSL_NO_VERIFY=true --env TRAINS_AGENT_GIT_USER=okyspace --env TRAINS_AGENT_GIT_PASS=airlab123")
     task.execute_remotely(queue_name="queue-8gb-ram", exit_process=True)
 
     ###################################
