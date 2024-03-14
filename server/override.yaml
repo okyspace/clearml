@@ -1,0 +1,691 @@
+define: &uid <replace>
+define: &storageclass "crc-csi-hostpath-provisioner"
+
+# -- Global parameters section
+global:
+  # -- Images registry
+  imageRegistry: "docker.io"
+
+# -- Container registry configuration
+imageCredentials:
+  # -- Use private authentication mode
+  enabled: true
+  # -- Registry name
+  registry: docker.io
+  # -- Registry username
+  username: <username>
+  # -- Registry password
+  password: <password>
+
+# -- ClearMl generic configurations
+clearml:
+  # -- Name fo the UI cookie
+  cookieName: "clearml-token-k8s"
+  # -- Cookie domain to be left empty if not exposed with an ingress
+  cookieDomain: ""
+  # -- Company name
+  defaultCompany: "d1bd92a3b039400cbafc60a7a5b1e52b"
+  # -- Company ID
+  defaultCompanyGuid: "d1bd92a3b039400cbafc60a7a5b1e52b"
+  # -- Maximum number of users available regarding license definition
+  maxUsers: 10
+  # -- Api Server basic auth key
+  apiserverKey: XXS9F4M6XB2DXJ5AFT9F
+  # -- Api Server basic auth secret
+  apiserverSecret: XXGujVFhPfaozhpuz2GzQfA5OyxmMsR3WVJpsCR5hrgHFs20PO
+  # -- File Server basic auth key
+  fileserverKey: XXCRJ123CEE2KSQ068WO
+  # -- File Server basic auth secret
+  fileserverSecret: XXy8EVAC7QCT4FtgitxAQGyW7xRHDZ4jpYlTE7HKiscpORl1hG
+  # -- Secure Auth secret
+  secureAuthTokenSecret: ymLh1ok5k5xNUQfS944Xdx9xjf0wueokqKM2dMZfHuH9ayItG2
+  # -- Test Server basic auth key
+  testUserKey: "ENP39EQM4SLACGD5FXB7"
+  # -- Test File Server basic auth secret
+  testUserSecret: "lPcm0imbcBZ8mwgO7tpadutiS3gnJD05x9j7afwXPS35IKbpiQ"
+  # -- Override the API Urls displayed when showing an example of the SDK's clearml.conf configuration in UI
+  clientConfigurationApiUrl: ""
+  # -- Override the Files Urls displayed when showing an example of the SDK's clearml.conf configuration in UI (needed for async_delete to run if fileserver ingress is disabled)
+  clientConfigurationFilesUrl: ""
+  # -- extra index URL for Enterprise packages
+  extraIndexUrl: ""
+  # -- Pass Clearml secrets using an existing secret
+  # must contain the keys: apiserver_secret, fileserver_key, fileserver_secret, apps_agent_key,
+  # apps_agent_secret, secure_auth_token_secret, apps_git_agent_user, apps_git_agent_pass,
+  # test_user_key, test_user_secret
+  existingSecret: ""
+
+catchallIngress:
+  # -- Enable/Disable catchall ingress (if enabled you must not enable any other ingress in this values file)
+  enabled: false
+  # -- ClassName (must be defined if no default ingressClassName is available)
+  ingressClassName: ""
+  # -- Ingress hostname domain - catchall if not set like:
+  # hostName: "clearml.127-0-0-1.nip.io"
+  hostname: null
+  # -- Reference to secret containing TLS certificate. If set, it enables HTTPS on ingress rule.
+  tlsSecretName: ""
+  # -- Ingress annotations
+  # eventually needed annotations for nginx example:
+  # nginx.ingress.kubernetes.io/rewrite-target: /$2
+  annotations: {}
+  # -- Ingress root path url for api server
+  apiPath: "/api"
+  # -- Ingress root path regex catcher for api server - specifically related annotations example:
+  # for nginx
+  # apiPathCatcher: "(/|$)(.*)"
+  apiPathCatcher: ""
+  # -- Ingress root path url for webserver
+  appPath: "/clearml"
+  # -- Ingress root path regex catcher for webserver - specifically related annotations example:
+  # for nginx
+  # appPathCatcher: "(/|$)(.*)"
+  appPathCatcher: ""
+  # -- Ingress root path url for fileserver
+  filesPath: "/files"
+  # -- Ingress root path regex catcher for fileserver - specifically related annotations example:
+  # for nginx
+  # filesPathCatcher: "(/|$)(.*)"
+  filesPathCatcher: ""
+# -- Api Server configurations
+apiserver:
+  # -- Enable/Disable component deployment
+  enabled: true
+  # -- Enable/Disable example data load
+  prepopulateEnabled: true
+  # -- The default serviceAccountName to be used
+  serviceAccountName: clearml
+  # -- Api Server image configuration
+  image:
+    registry: ""
+    repository: "allegroai/poc-apiserver"
+    pullPolicy: IfNotPresent
+    tag: "3.21.0-1368"
+  # -- Api Server internal service configuration
+  service:
+    # -- specific annotation for Api Server service
+    annotations: {}
+    type: ClusterIP
+    port: 8008
+    # -- If service.type set to NodePort, this will be set to service's nodePort field.
+    # If service.type is set to others, this field will be ignored
+    nodePort: 30008
+  # -- Api Server number of pods
+  replicaCount: 1
+  # -- Api Server internal checking probes roundtrip PERIOD in seconds
+  probeRoundtripSeconds: 10
+  # -- Api Server internal checking probes roundtrip TIMEOUT in seconds
+  probeRoundtripTimeoutSeconds: 10
+  # -- Api server Permission management feature
+  permissionsManagementEnabled: true
+  # -- Api server Data management feature
+  dataManagementEnabled: true
+  # -- HorizontalPodAutoscaler for Api Server component
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 5
+    targetCPU: "60"
+    targetMemory: ""
+    behavior: {}
+  # -- Api Server resources per initContainers pod
+  initContainers:
+    resources:
+      requests:
+        cpu: 0.1
+        memory: 64Mi
+      limits:
+        memory: 64Mi
+  # -- Ingress configuration for Api Server component
+  ingress:
+    # -- Enable/Disable ingress
+    enabled: false
+    # -- ClassName (must be defined if no default ingressClassName is available)
+    ingressClassName: ""
+    # -- Ingress hostname domain
+    hostName: "api.clearml.127-0-0-1.nip.io"
+    # -- Reference to secret containing TLS certificate. If set, it enables HTTPS on ingress rule.
+    tlsSecretName: ""
+    # -- Ingress annotations
+    annotations: {}
+    # -- Ingress root path url
+    path: "/"
+  # -- Api Server internal processes configuration
+  processes:
+    # -- Api Server internal listing processes
+    count: 8
+    # -- Api timeout (ms)
+    timeout: 24000
+    # -- Api Server maximum number of concurrent requests
+    maxRequests: 1000
+    # -- Api Server max jitter on api request
+    maxRequestsJitter: 300
+  # -- Api Server extra envrinoment variables
+  extraEnvs: 
+    - name: CLEARML_IMPORT_APP_ON_STARTUP
+      value: "true"
+    - name: ALLEGRO__apiserver__default_company
+      value: "d1bd92a3b039400cbafc60a7a5b1e52b"
+    # keycloak integration configs
+    - name: CLEARML__services__login__sso__oauth_client__keycloak__base_url
+      value: "http://keycloak.apps-crc.testing/realms/CommonServices"
+    - name: CLEARML__services__login__sso__oauth_client__keycloak__authorize_url
+      value: "http://keycloak.apps-crc.testing/realms/CommonServices/protocol/openid-connect/auth"
+    - name: CLEARML__services__login__sso__oauth_client__keycloak__access_token_url
+      value: "http://keycloak.apps-crc.testing/realms/CommonServices/protocol/openid-connect/token"
+    - name: CLEARML__secure__login__sso__oauth_client__keycloak__client_id
+      value: "clearml"
+    - name: CLEARML__secure__login__sso__oauth_client__keycloak__client_secret
+      value: "<client-secret>"
+    - name: CLEARML__secure__login__sso__oauth_client__keycloak__default_company
+      value: "d1bd92a3b039400cbafc60a7a5b1e52b"
+    # CA bundle
+    - name: REQUESTS_CA_BUNDLE
+      value: "/opt/clearml/config/default/ica.crt"
+  # -- Number of additional replicas in Elasticsearch indexes
+  indexReplicas: 0
+  # -- Number of shards in Elasticsearch indexes
+  indexShards: 1
+  # -- previous indexReplicas/indexShards is applied to Events indexes
+  indexPatternOverrideConfigEvents: true
+  # -- previous indexReplicas/indexShards is applied to Workers indexes
+  indexPatternOverrideConfigWorkers: false
+  # -- previous indexReplicas/indexShards is applied to Datasets indexes
+  indexPatternOverrideConfigDatasets: false
+  # -- previous indexReplicas/indexShards is applied to Logs indexes
+  indexPatternOverrideConfigLogs: false
+  # -- Seconds before SSO token is set as expired (0 = no expiration)
+  ssoTokenExpirationSec: 0
+  # -- specific annotation for Api Server pods
+  podAnnotations: {}
+  # -- Api Server resources per pod; these are minimal requirements, it's suggested to increase
+  # these values in production environments
+  resources:
+    requests:
+      cpu: 0.1
+      memory: 256Mi
+    limits:
+      memory: 2Gi
+  # -- Api Server nodeselector
+  nodeSelector: {}
+  # -- Api Server tolerations setup
+  tolerations: []
+  # -- Api Server affinity setup
+  affinity: {}
+  # -- Api Server pod security context
+  podSecurityContext: {}
+  # -- Api Server containers security context
+  containerSecurityContext:
+    runAsUser: *uid
+    runAsNonRoot: true
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop: ["ALL"]
+    seccompProfile:
+      type: RuntimeDefault
+  # -- reference for files declared in existing ConfigMap will be mounted and read by apiserver (examples in values.yaml)
+  existingAdditionalConfigsConfigMap: ""
+  # -- reference for files declared in existing Secret will be mounted and read by apiserver (examples in values.yaml) if not overridden by existingAdditionalConfigsConfigMap
+  existingAdditionalConfigsSecret: ""
+  # -- files declared in this parameter will be mounted and read by apiserver (examples in values.yaml) if not overridden by existingAdditionalConfigsSecret
+  additionalConfigs: 
+    services.conf: |
+      tasks {
+        non_responsive_tasks_watchdog {
+          # In-progress tasks that haven't been updated for at least 'value' seconds will be stopped by the watchdog
+          threshold_sec: 21000
+          # Watchdog will sleep for this number of seconds after each cycle
+          watch_interval_sec: 900
+        }
+      }
+    crc.crt: |
+      -----BEGIN CERTIFICATE-----
+      MIIDDDCCAfSgAwIBAgIBATANBgkqhkiG9w0BAQsFADAmMSQwIgYDVQQDDBtpbmdy
+      ZXNzLW9wZXJhdG9yQDE3MDQyODA5MTYwHhcNMjQwMTAzMTEyMTU1WhcNMjYwMTAy
+      MTEyMTU2WjAmMSQwIgYDVQQDDBtpbmdyZXNzLW9wZXJhdG9yQDE3MDQyODA5MTYw
+      ggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDBvGoBgzsSxMlfpiWkk/8o
+      VhC0ObRooKhYz4q+UeB4pEcyK2y1PKIcbFDffysv5n9SxtCgSXnn3ATgE52P+yw6
+      mGInCv5T+rmz3du0RRv9LpoxBL2zOfCVSTw8FGA1gCtBwDhsG2MAh87qTc09rd9F
+      Tc9CiUjL8OTW4FCRUbVtkwg8mmp0YgnoJAMgSNdAPpGSzQV2aGQqifeNWRZUk8s2
+      xHhpO25HGzv9ArlkKss+4cfrQyQ74rX0mNwDcIurym5Q+dSNmqfR5rf0HGGo/UP8
+      t+E9NicOUxU4HlodbPlMfjKAZh3AIeabG/eeT28NfYJ4U08ZDbcYmY0hVtB16chr
+      AgMBAAGjRTBDMA4GA1UdDwEB/wQEAwICpDASBgNVHRMBAf8ECDAGAQH/AgEAMB0G
+      A1UdDgQWBBQ+Wm7nmf7i3meejFm7tgWtEQB4VTANBgkqhkiG9w0BAQsFAAOCAQEA
+      vaUVZfIOoPspKpKLtfas/31fgXUFuNLmMhpHHj5RChF2SorCvTLKSsd24cxMpf8Z
+      vaz/OMOHanGHqn8PV0s2PwJ4jTRDBYdV5tgYp8/ZiuknLzjIYE0w20m9ne8VKkgz
+      9O12olAVJYWDAxCGTy5jghbxFHbK+QQbtT1Tc7eVXBdNxtZJo3TZaB4CvwoLHlwA
+      zZACxLYLCERvntsmQrKcW115HO1JBHBWoAHeAD9FV+xvwONB4tutjOirJF7NMA0j
+      CvV6T9GJSiKiLSkdelyq7vmpOuhsgayrxfhBcdANWmkPW6VWkiBacy0zrT8ADmJz
+      5HlJ4PaiBDpkoNx2OJLpBA==
+      -----END CERTIFICATE-----
+
+# -- File Server configurations
+fileserver:
+  # -- Enable/Disable component deployment
+  enabled: true
+  # -- The default serviceAccountName to be used
+  serviceAccountName: clearml
+  # -- File Server image configuration
+  image:
+    registry: ""
+    repository: "allegroai/poc-fileserver"
+    pullPolicy: IfNotPresent
+    tag: "3.21.0-1368"
+  # -- File Server internal service configuration
+  service:
+    # -- specific annotation for File Server service
+    annotations: {}
+    type: ClusterIP
+    port: 8081
+    # -- If service.type set to NodePort, this will be set to service's nodePort field.
+    # If service.type is set to others, this field will be ignored
+    nodePort: 30081
+  # -- File Server number of pods
+  replicaCount: 1
+  # -- File Server internal checking probes roundtrip PERIOD in seconds
+  probeRoundtripSeconds: 10
+  # -- File Server internal checking probes roundtrip TIMEOUT in seconds
+  probeRoundtripTimeoutSeconds: 10
+  # -- HorizontalPodAutoscaler for File Server component
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 5
+    targetCPU: "60"
+    targetMemory: ""
+    behavior: {}
+  # -- File Server resources per initContainers pod
+  initContainers:
+    resources:
+      requests:
+        cpu: 0.1
+        memory: 64Mi
+      limits:
+        memory: 64Mi
+  # -- Ingress configuration for File Server component
+  ingress:
+    # -- Enable/Disable ingress
+    enabled: false
+    # -- ClassName (must be defined if no default ingressClassName is available)
+    ingressClassName: ""
+    # -- Ingress hostname domain
+    hostName: "files.clearml.127-0-0-1.nip.io"
+    # -- Reference to secret containing TLS certificate. If set, it enables HTTPS on ingress rule.
+    tlsSecretName: ""
+    # -- Ingress annotations
+    annotations: {}
+    # -- Ingress root path url
+    path: "/"
+  # -- File Server internal processes configuration
+  processes:
+    # -- File Server internal listing processes
+    count: 8
+    # -- Api timeout (ms)
+    timeout: 600000
+  # -- File Server extra envrinoment variables
+  extraEnvs: []
+  # -- specific annotation for File Server pods
+  podAnnotations: {}
+  # -- File Server resources per pod; these are minimal requirements, it's suggested to increase
+  # these values in production environments
+  resources:
+    requests:
+      cpu: 0.1
+      memory: 256Mi
+    limits:
+      memory: 1Gi
+  # -- File Server nodeselector
+  nodeSelector: {}
+  # -- File Server tolerations setup
+  tolerations: []
+  # -- File Server affinity setup
+  affinity: {}
+  # -- File Server pod security context
+  podSecurityContext: {}
+  # -- File Server containers security context
+  containerSecurityContext: 
+  containerSecurityContext:
+    runAsUser: *uid
+    runAsNonRoot: true
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop: ["ALL"]
+    seccompProfile:
+      type: RuntimeDefault
+  # -- File server persistence settings
+  storage:
+    # -- If set to false no PVC is created and emptyDir is used
+    enabled: true
+    data:
+      # -- If set, it uses an already existing PVC instead of dynamic provisioning
+      existingPVC: ""
+      # -- Storage class (use default if empty)
+      class: ""
+      # -- Access mode (must be ReadWriteMany if fileserver replica > 1)
+      accessMode: ReadWriteOnce
+      size: 50Gi
+
+# -- Web Server configurations
+webserver:
+  # -- Enable/Disable component deployment
+  enabled: true
+  # -- The default serviceAccountName to be used
+  serviceAccountName: clearml
+  # -- Web Server image configuration
+  image:
+    registry: ""
+    repository: "allegroai/poc-webserver"
+    pullPolicy: IfNotPresent
+    tag: "3.21.0-1636"
+  # -- Web Server internal service configuration
+  service:
+    # -- specific annotation for Web Server service
+    annotations: {}
+    type: ClusterIP
+    port: 8080
+    # -- If service.type set to NodePort, this will be set to service's nodePort field.
+    # If service.type is set to others, this field will be ignored
+    nodePort: 30080
+  # -- Web Server number of pods
+  replicaCount: 1
+  # -- Web Server internal checking probes roundtrip PERIOD in seconds
+  probeRoundtripSeconds: 10
+  # -- Web Server internal checking probes roundtrip TIMEOUT in seconds
+  probeRoundtripTimeoutSeconds: 10
+  # -- HorizontalPodAutoscaler for Web Server component
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 5
+    targetCPU: "60"
+    targetMemory: ""
+    behavior: {}
+  # -- Web Server resources per initContainers pod
+  initContainers:
+    resources:
+      requests:
+        cpu: 0.1
+        memory: 64Mi
+      limits:
+        memory: 64Mi
+  # -- Ingress configuration for Web Server component
+  ingress:
+    # -- Enable/Disable ingress
+    enabled: false
+    # -- ClassName (must be defined if no default ingressClassName is available)
+    ingressClassName: ""
+    # -- Ingress hostname domain
+    hostName: "app.clearml.127-0-0-1.nip.io"
+    # -- Reference to secret containing TLS certificate. If set, it enables HTTPS on ingress rule.
+    tlsSecretName: ""
+    # -- Ingress annotations
+    annotations: {}
+    # -- Ingress root path url
+    path: "/"
+  # -- Air gapped documentation  configurations
+  airGappedDocumentation:
+    # -- Enable/Disable air gapped documentation deployment
+    enabled: true
+    # -- Air gapped documentation image configuration
+    image:
+      registry: ""
+      repository: "allegroai/poc-clearml-docs-onprem"
+      tag: "7"
+  # -- ChatGPT service url reference
+  chatServiceURL: "https://task-router.clearml.127-0-0-1.nip.io/service"
+  # -- Web Server extra envrinoment variables
+  extraEnvs: []
+  # -- specific annotation for Web Server pods
+  podAnnotations: {}
+  # -- Web Server resources per pod; these are minimal requirements, it's suggested to increase
+  # these values in production environments
+  resources:
+    requests:
+      cpu: 0.1
+      memory: 256Mi
+    limits:
+      memory: 1Gi
+  # -- Web Server nodeselector
+  nodeSelector: {}
+  # -- Web Server tolerations setup
+  tolerations: []
+  # -- Web Server affinity setup
+  affinity: {}
+  # -- Web Server pod security context
+  podSecurityContext: {}
+  # -- Web Server containers security context
+  containerSecurityContext: {}
+  #   runAsUser: 1001
+  #   fsGroup: 1001
+  # -- Additional specific webserver configurations
+  additionalConfigs: {}
+
+# -- APPS configurations
+clearmlApplications:
+  # -- Apps Server Git user
+  gitAgentUser: "git_user"
+  # -- Apps Server Git password
+  gitAgentPass: "git_password"
+  # -- Enable/Disable component deployment
+  enabled: true
+  # -- Override autogeneration of reference to Api server url
+  apiServerUrlReferenceOverride: "http://clearml-clearml-enterprise-apiserver.clearml:8008"
+  # -- Override autogeneration of reference to File server url
+  fileServerUrlReferenceOverride: "http://clearml-clearml-enterprise-fileserver.clearml:8081"
+  # -- Override autogeneration of reference to Web server url
+  webServerUrlReferenceOverride: "http://clearml-clearml-enterprise-webserver.clearml:8080"
+  # -- APPS image configuration
+  image:
+    repository: "allegroai/clearml-enterprise-agent-k8s-base"
+    pullPolicy: IfNotPresent
+    tag: "1.24-1.6.2rc5-113"
+  # -- APPS base spawning pods image
+  basePodImage:
+    repository: "allegroai/clearml-agent-services-app"
+    tag: "app-1.2.0-50"
+  # -- APPS number of pods
+  replicaCount: 1
+  # -- APPS extra envrinoment variables
+  extraEnvs:
+    - name: CLEARML_K8S_GLUE_START_AGENT_SCRIPT_PATH
+      value: /tmp/__start_agent__.sh
+    - name: HOME
+      value: /tmp
+  # -- additional existing ClusterRoleBindings
+  additionalClusterRoleBindings: []
+  # - privileged
+  # -- additional existing RoleBindings
+  additionalRoleBindings: []
+  # - privileged
+  # -- Custom Bash script for the APPS Agent pod ran by Glue Agent
+  customBashScript: ""
+  # -- Custom Bash script for the APPS Task Pods ran by Glue Agent
+  containerCustomBashScript: |
+    export HOME=/tmp \n
+    export LOCAL_PYTHON=python3 \n
+    {extra_bash_init_cmd} \n
+    [ ! -z $CLEARML_AGENT_NO_UPDATE ] || $LOCAL_PYTHON -m pip install clearml-agent{agent_install_args} \n
+    {extra_docker_bash_script} \n
+    $LOCAL_PYTHON -m clearml_agent execute {default_execution_agent_args} --id {task_id}
+  # -- APPS pod security context
+  podSecurityContext: {}
+  # -- APPS containers security context
+  containerSecurityContext:
+    runAsUser: *uid
+    runAsNonRoot: true
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop: ["ALL"]
+    seccompProfile:
+      type: RuntimeDefault
+  # -- file definition
+  fileMounts: []
+    # -- volumes definition for Glue Agent (example in values.yaml comments)
+  volumes: []
+    # - name: "yourvolume"
+    #   nfs:
+    #    server: 192.168.0.1
+    #    path: /var/nfs/mount
+  # -- volume mounts definition for Glue Agent (example in values.yaml comments)
+  volumeMounts: []
+    # - name: yourvolume
+    #   mountPath: /yourpath
+    #   subPath: userfolder
+  # -- specific annotation for APPS pods
+  podAnnotations: {}
+  # -- APPS resources per pod; these are minimal requirements, it's suggested to increase
+  # these values in production environments
+  resources:
+    requests:
+      cpu: 0.1
+      memory: 256Mi
+    limits:
+      memory: 1Gi
+  # -- APPS nodeselector
+  nodeSelector: {}
+  # -- APPS tolerations setup
+  tolerations: []
+  # -- APPS affinity setup
+  affinity: {}
+
+# -- Definition of external services to use if not enabled as dependency charts here
+externalServices:
+  # -- Existing ElasticSearch connectionstring if elasticsearch.enabled is false
+  elasticsearchConnectionString: "[{\"host\":\"es_hostname1\",\"port\":9200},{\"host\":\"es_hostname2\",\"port\":9200},{\"host\":\"es_hostname3\",\"port\":9200}]"
+  # -- Existing MongoDB connection string for BACKEND to use if mongodb.enabled is false
+  mongodbConnectionStringAuth: "mongodb://mongodb_hostname:27017/auth"
+  # -- Existing MongoDB connection string for AUTH to use if mongodb.enabled is false
+  mongodbConnectionStringBackend: "mongodb://mongodb_hostnamehostname:27017/backend"
+  # -- Existing Redis Hostname to use if redis.enabled is false
+  redisHost: "redis_hostname"
+  # -- Existing Redis Port to use if redis.enabled is false
+  redisPort: 6379
+
+# -- Configuration from https://github.com/bitnami/charts/blob/master/bitnami/redis/values.yaml
+redis:
+  enabled: true
+  auth:
+    enabled: false
+  databaseNumber: 0
+  master:
+    name: "{{ .Release.Name }}-redis-master"
+    port: 6379
+    persistence:
+      enabled: true
+      accessModes:
+        - ReadWriteOnce
+      size: 5Gi
+      ## If undefined (the default) or set to null, no storageClassName spec is set, choosing the default provisioner
+      storageClass: null
+    containerSecurityContext:
+      runAsNonRoot: true
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop: ["ALL"]
+      seccompProfile:
+        type: RuntimeDefault
+      enabled: true
+      runAsUser: *uid
+      runAsNonRoot: true
+    podSecurityContext:
+      enabled: true
+      fsGroup: *uid
+  architecture: standalone
+
+# -- Configuration from https://github.com/bitnami/charts/blob/master/bitnami/mongodb/values.yaml
+mongodb:
+  enabled: true
+  architecture: standalone
+  auth:
+    enabled: false
+  replicaCount: 1
+  persistence:
+    enabled: true
+    accessModes:
+      - ReadWriteOnce
+    size: 50Gi
+    ## If undefined (the default) or set to null, no storageClassName spec is set, choosing the default provisioner
+    storageClass: null
+  containerSecurityContext:
+    enabled: true
+    runAsNonRoot: true
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop: ["ALL"]
+    seccompProfile:
+      type: RuntimeDefault
+    enabled: true
+    runAsUser: *uid
+    runAsNonRoot: true
+  podSecurityContext:
+    enabled: true
+    fsGroup: *uid
+
+# -- Configuration from https://github.com/elastic/helm-charts/blob/7.16/elasticsearch/values.yaml
+elasticsearch:
+  enabled: true
+  httpPort: 9200
+  httpScheme: "http"
+  roles:
+    master: "true"
+    ingest: "true"
+    data: "true"
+    remote_cluster_client: "true"
+  replicas: 1
+  # Readiness probe hack for a single-node cluster (where status will never be green). Should be removed if using replicas > 1
+  clusterHealthCheckParams: "wait_for_status=yellow&timeout=1s"
+  rbac:
+    create: true
+  minimumMasterNodes: 1
+  clusterName: clearml-elastic
+  esJavaOpts: "-Xmx2g -Xms2g"
+  extraEnvs:
+    - name: bootstrap.memory_lock
+      value: "false"
+    - name: cluster.routing.allocation.node_initial_primaries_recoveries
+      value: "500"
+    - name: cluster.routing.allocation.disk.watermark.low
+      value: 500mb
+    - name: cluster.routing.allocation.disk.watermark.high
+      value: 500mb
+    - name: cluster.routing.allocation.disk.watermark.flood_stage
+      value: 500mb
+    - name: http.compression_level
+      value: "7"
+    - name: reindex.remote.whitelist
+      value: '*.*'
+    - name: xpack.monitoring.enabled
+      value: "false"
+    - name: xpack.security.enabled
+      value: "false"
+  resources:
+    requests:
+      cpu: 0.1
+      memory: 2Gi
+    limits:
+      memory: 4Gi
+  persistence:
+    enabled: true
+  volumeClaimTemplate:
+    accessModes: ["ReadWriteOnce"]
+    ## If undefined (the default) or set to null, no storageClassName spec is set, choosing the default provisioner
+    storageClassName: null
+    resources:
+      requests:
+        storage: 50Gi
+  esConfig:
+    elasticsearch.yml: |
+      xpack.security.enabled: false
+  sysctlInitContainer:
+    enabled: false
+  securityContext:
+    runAsUser: *uid
+    runAsNonRoot: true
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop: ["ALL"]
+    seccompProfile:
+      type: RuntimeDefault
+  podSecurityContext:
+    fsGroup: *uid
+    runAsUser: *uid
